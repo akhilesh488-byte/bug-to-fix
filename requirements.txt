@@ -1,0 +1,7 @@
+pathlib
+python-dotenv
+ipython
+langsmith
+litellm
+nbformat
+nbconvert
