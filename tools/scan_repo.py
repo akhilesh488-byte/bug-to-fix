@@ -11,5 +11,3 @@ def scan_repo():
     for path in target_repo.rglob("*"):
         files.append(str(path.relative_to(target_repo).as_posix()))
     return files
-
-# print(scan_repo())

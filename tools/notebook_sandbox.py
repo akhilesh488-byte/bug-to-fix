@@ -1,5 +1,6 @@
 import queue
 from jupyter_client import KernelManager
+import re
 
 class NotebookSandbox:
     def __init__(self):
@@ -15,9 +16,11 @@ class NotebookSandbox:
         self.cells = []
         print("[SANDBOX] Isolated playground environment ready.")
 
-    def add_cell(self, code: str) -> str:
+    def add_cell(self, LLM_code: str) -> str:
         """Allows the LLM to append a new code block to the scratchpad."""
         cell_id = len(self.cells) + 1
+        extract_code = re.compile(r"<execute_python>\s*(.*?)\s*</execute_python>", re.DOTALL)
+        code = extract_code.search(LLM_code).group(1).strip()
         self.cells.append({
             "cell_id": cell_id,
             "source": code,
@@ -25,8 +28,11 @@ class NotebookSandbox:
         })
         return f"Successfully added Code Cell {cell_id}."
 
-    def edit_cell(self, cell_id: int, new_code: str) -> str:
+    def edit_cell(self, cell_id: int, LLM_code: str) -> str:
         """Allows the LLM to rewrite the contents of an existing sandbox cell."""
+        cell_id = len(self.cells) + 1
+        extract_code = re.compile(r"<execute_python>\s*(.*?)\s*</execute_python>", re.DOTALL)
+        new_code = extract_code.search(LLM_code).group(1).strip()
         idx = cell_id - 1
         if 0 <= idx < len(self.cells):
             self.cells[idx]["source"] = new_code
@@ -39,7 +45,7 @@ class NotebookSandbox:
         Executes a specific cell within the persistent environment state.
         Variables defined in previous executions remain live in memory.
         """
-        idx = cell_id - 1
+        idx = int(cell_id) - 1
         if not (0 <= idx < len(self.cells)):
             return f"Error: Cell {cell_id} out of bounds."
 
@@ -107,3 +113,4 @@ class NotebookSandbox:
         """Terminates the background execution process cleanly."""
         self.kc.stop_channels()
         self.km.shutdown_kernel()
+        
